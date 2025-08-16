@@ -24,6 +24,9 @@ jobs:
       - name: Generate key
         run: php artisan key:generate
 
+      - name: Migration
+        run: php artisan migrate --force
+
       - name: Generate storage link
         run: php artisan storage:link
 
