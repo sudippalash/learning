@@ -1,4 +1,4 @@
-name: 🚀 Deploy Laravel Project to cPanel (SSH + FTP)
+name: Deploy Laravel Project to cPanel (SSH + FTP)
 
 on:
   push:
