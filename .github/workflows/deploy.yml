@@ -20,27 +20,28 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.CPANEL_SSH_KEY }}
       
-       # 📂 Upload code via FTP
-      - name: Upload to cPanel
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          port: 21
+      # 📂 Deploy with rsync (safer than FTP)
+      - name: Sync project to server
+        run: |
+          rsync -avz --delete \
+          --exclude ".git" \
+          --exclude "node_modules" \
+          --exclude "vendor" \
+          --exclude ".env" \
+          --exclude "storage/" \
+          ./ ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:/home/${{ secrets.CPANEL_USER }}/learning/
 
       # ⚡ Run Laravel commands on cPanel via SSH
       - name: Run migrations and optimizations
         run: |
           ssh ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} << 'EOF'
-            cd /home/youruser/laravel-app
+            cd /home/${{ secrets.CPANEL_USER }}/learning
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan config:clear
             php artisan cache:clear
             php artisan route:clear
             php artisan storage:link || true
-            chown -R youruser:youruser storage bootstrap/cache
+            chown -R ${{ secrets.CPANEL_USER }}:${{ secrets.CPANEL_USER }} storage bootstrap/cache
             chmod -R 775 storage bootstrap/cache
           EOF
