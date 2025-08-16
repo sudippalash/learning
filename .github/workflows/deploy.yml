@@ -1,4 +1,4 @@
-name: Deploy on push to cPanel via FTP
+name: Deploy on push to cPanel via SSH
 
 on:
   push:
@@ -14,27 +14,34 @@ jobs:
       - name: Get the latest code
         uses: actions/checkout@v3
 
-      - uses: actions/setup-node@master
-
-      - name: Copy .env
-        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
-      - name: Install Dependencies
-        run: composer update --ignore-platform-reqs
-
-      - name: Generate key
-        run: php artisan key:generate
-
-      - name: Generate storage link
-        run: php artisan storage:link
-
-      - name: Directory Permissions
-        run: chmod -R 777 storage bootstrap/cache
-
-      - name: 📂 Sync files to cPanel
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      # 🔑 Setup SSH (use your private key saved in GitHub Secrets)
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
-          port: 21
+          ssh-private-key: ${{ secrets.CPANEL_SSH_KEY }}
+      
+      # 📂 Deploy with rsync (safer than FTP)
+      - name: Sync project to server
+        run: |
+          rsync -avz --delete \
+          --exclude ".git" \
+          --exclude "node_modules" \
+          --exclude "vendor" \
+          --exclude ".env" \
+          --exclude "storage/" \
+          ./ ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:/home/${{ secrets.CPANEL_USER }}/learning/
+
+      # ⚡ Run Laravel commands on cPanel via SSH
+      - name: Run migrations and optimizations
+        run: |
+          ssh ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} << 'EOF'
+            cd /home/${{ secrets.CPANEL_USER }}/learning
+            composer install --no-dev --optimize-autoloader
+            php artisan migrate --force
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan route:clear
+            php artisan storage:link || true
+            chown -R ${{ secrets.CPANEL_USER }}:${{ secrets.CPANEL_USER }} storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+          EOF
