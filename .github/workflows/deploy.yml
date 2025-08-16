@@ -1,4 +1,4 @@
-name: Deploy on push to cPanel via FTP
+name: 🚀 Deploy Laravel Project to cPanel (SSH + FTP)
 
 on:
   push:
@@ -14,23 +14,14 @@ jobs:
       - name: Get the latest code
         uses: actions/checkout@v3
 
-      - uses: actions/setup-node@master
-
-      - name: Copy .env
-        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
-      - name: Install Dependencies
-        run: composer update --ignore-platform-reqs
-
-      - name: Generate key
-        run: php artisan key:generate
-
-      - name: Generate storage link
-        run: php artisan storage:link
-
-      - name: Directory Permissions
-        run: chmod -R 777 storage bootstrap/cache
-
-      - name: 📂 Sync files to cPanel
+      # 🔑 Setup SSH (use your private key saved in GitHub Secrets)
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.CPANEL_SSH_KEY }}
+      
+       # 📂 Upload code via FTP
+      - name: Upload to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -38,3 +29,18 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           port: 21
+
+      # ⚡ Run Laravel commands on cPanel via SSH
+      - name: Run migrations and optimizations
+        run: |
+          ssh ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} << 'EOF'
+            cd /home/youruser/laravel-app
+            composer install --no-dev --optimize-autoloader
+            php artisan migrate --force
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan route:clear
+            php artisan storage:link || true
+            chown -R youruser:youruser storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+          EOF
