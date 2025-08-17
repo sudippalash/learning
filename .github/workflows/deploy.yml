@@ -44,6 +44,7 @@ jobs:
             # copy .env only if not exists
             if [ ! -f .env ]; then
               cp .env.example .env
+              php artisan key:generate
             fi
 
             composer install --no-dev --optimize-autoloader
