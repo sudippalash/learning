@@ -40,6 +40,12 @@ jobs:
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd /var/www/learning
+
+            # copy .env only if not exists
+            if [ ! -f .env ]; then
+              cp .env.example .env
+            fi
+
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan config:clear
