@@ -1,4 +1,4 @@
-name: Deploy on push to cPanel via SSH
+name: 🚀 Deploy Laravel to VPS
 
 on:
   push:
@@ -7,41 +7,39 @@ on:
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/main'
-    name: Deploy to Main
+    name: Deploy to VPS
     runs-on: ubuntu-latest
+
     steps:
-      - name: Get the latest code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # 🔑 Setup SSH (use your private key saved in GitHub Secrets)
+      # 🔑 Setup SSH for VPS
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
-          ssh-private-key: ${{ secrets.CPANEL_SSH_KEY }}
-      
-      # 📂 Deploy with rsync (safer than FTP)
-      - name: Sync project to server
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      # 📂 Copy project files to VPS
+      - name: Deploy via SCP
         run: |
           rsync -avz --delete \
           --exclude ".git" \
           --exclude "node_modules" \
           --exclude "vendor" \
-          --exclude ".env" \
-          --exclude "storage/" \
-          ./ ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:/home/${{ secrets.CPANEL_USER }}/learning/
+          ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/learning
 
-      # ⚡ Run Laravel commands on cPanel via SSH
-      - name: Run migrations and optimizations
+      # ⚡ Run Laravel commands on VPS
+      - name: Run SSH commands
         run: |
-          ssh ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }} << 'EOF'
-            cd /home/${{ secrets.CPANEL_USER }}/learning
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /var/www/learning
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan config:clear
-            php artisan cache:clear
             php artisan route:clear
+            php artisan cache:clear
             php artisan storage:link || true
-            chown -R ${{ secrets.CPANEL_USER }}:${{ secrets.CPANEL_USER }} storage bootstrap/cache
+            chown -R www-data:www-data storage bootstrap/cache
             chmod -R 775 storage bootstrap/cache
           EOF
