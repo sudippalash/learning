@@ -30,7 +30,8 @@ jobs:
       - name: Deploy via SCP
         run: |
           rsync -avz --delete \
-          --exclude ".git" \
+          # Exclude unnecessary files and directories
+          # --exclude ".git" \
           --exclude "node_modules" \
           --exclude "vendor" \
           --exclude ".env" \
