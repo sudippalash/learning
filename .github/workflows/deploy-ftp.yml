@@ -40,8 +40,9 @@ jobs:
           protocol: ftp
           port: 21
           exclude: |
-            .git
-            .env
+            **/.git*
+            **/.git*/**
+            /.env
           dangerous-clean-slate: false
 
       # Webhook URL
