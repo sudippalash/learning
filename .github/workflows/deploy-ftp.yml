@@ -46,7 +46,7 @@ jobs:
             **/storage/framework/views/**
           dangerous-clean-slate: false
 
-      # Webhook URL
+      # Webhook URL to run artisan commands
       - name: Trigger Webhook URL
         run: |
           curl -s "${{ secrets.FTP_DOMAIN_URL }}/deploy-webhook?secret=${{ secrets.FTP_DEPLOY_SECRET }}"
