@@ -25,9 +25,6 @@ jobs:
       - name: Generate key
         run: php artisan key:generate
 
-      - name: Generate storage link
-        run: php artisan storage:link
-
       - name: Directory Permissions
         run: chmod -R 777 storage bootstrap/cache
 
@@ -43,6 +40,10 @@ jobs:
             **/.git*
             **/.git*/**
             **/.env
+            **/storage/logs/**
+            **/storage/framework/cache/**
+            **/storage/framework/sessions/**
+            **/storage/framework/views/**
           dangerous-clean-slate: false
 
       # Webhook URL
