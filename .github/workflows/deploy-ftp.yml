@@ -48,4 +48,4 @@ jobs:
       # Webhook URL
       - name: Trigger Webhook URL
         run: |
-          curl -s "{{ secrets.FTP_DOMAIN_URL }}/deploy-webhook?secret=${{ secrets.FTP_DEPLOY_SECRET }}"
+          curl -s "${{ secrets.FTP_DOMAIN_URL }}/deploy-webhook?secret=${{ secrets.FTP_DEPLOY_SECRET }}"
