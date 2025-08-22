@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  deploy-main:
     if: github.ref == 'refs/heads/main'
     name: Deploy to Main
     runs-on: ubuntu-latest
@@ -18,7 +18,7 @@ jobs:
 
       - name: Copy .env
         run: php -r "file_exists('.env') || copy('.env.example', '.env');"
-        
+
       - name: Install Dependencies
         run: composer update --ignore-platform-reqs
 
@@ -39,3 +39,11 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           port: 21
+          exclude: |
+            .env
+          dangerous-clean-slate: false
+
+      # Webhook URL
+      - name: Trigger Webhook URL
+        run: |
+          curl -s "{{ secrets.FTP_DOMAIN_URL }}/deploy-webhook?secret=${{ secrets.FTP_DEPLOY_SECRET }}"
